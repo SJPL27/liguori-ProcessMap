@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Liguori Subscriptions — Process Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg:           #FAFAF8;
+  --surface:      #FFFFFF;
+  --surface-2:    #F3F4F6;
+  --border:       #D1D5DB;
+  --fg:           #111827;
+  --fg-muted:     #374151;
+  --fg-subtle:    #6B7280;
+  --navy:         #1B2A4A;
+  --navy-mid:     #2D4270;
+  --clr-customer: #1D6FA4;
+  --clr-system:   #2E7D52;
+  --clr-risk:     #B84C1A;
+  --clr-infra:    #5B3FA0;
+  --clr-pending:  #8B6914;
+  --clr-customer-bg: #EBF4FA;
+  --clr-system-bg:   #EAF4EE;
+  --clr-risk-bg:     #FBF0EB;
+  --clr-infra-bg:    #F0ECFB;
+  --clr-pending-bg:  #FBF6E9;
+  --radius-sm: 4px;
+  --radius:    8px;
+  --radius-lg: 12px;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #13151A; --surface: #1E2130; --surface-2: #272A38;
+    --border: #353849; --fg: #F0F2F8; --fg-muted: #9CA3B8; --fg-subtle: #5C6480;
+    --navy: #3A5490; --navy-mid: #4E6FA0;
+    --clr-customer-bg: #0B2035; --clr-system-bg: #0A2418;
+    --clr-risk-bg: #2A1208; --clr-infra-bg: #190E30; --clr-pending-bg: #261E07;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #13151A; --surface: #1E2130; --surface-2: #272A38;
+  --border: #353849; --fg: #F0F2F8; --fg-muted: #9CA3B8; --fg-subtle: #5C6480;
+  --navy: #3A5490; --navy-mid: #4E6FA0;
+  --clr-customer-bg: #0B2035; --clr-system-bg: #0A2418;
+  --clr-risk-bg: #2A1208; --clr-infra-bg: #190E30; --clr-pending-bg: #261E07;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.5;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
+img { max-width: 100%; }
+
+/* ── LAYOUT ── */
+.app-shell { display: flex; min-height: 100vh; }
+
+.sidenav {
+  width: 210px; flex-shrink: 0;
+  background: var(--navy); color: #E2E6EF;
+  position: sticky; top: 0; height: 100vh;
+  overflow-y: auto; display: flex; flex-direction: column;
+}
+.sidenav-header { padding: 18px 16px 14px; border-bottom: 1px solid rgba(255,255,255,.1); }
+.sidenav-logo { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 4px; }
+.sidenav-title { font-size: 14px; font-weight: 600; color: #fff; line-height: 1.3; }
+.sidenav-meta { font-size: 10px; color: rgba(255,255,255,.35); margin-top: 4px; font-family: var(--font-mono); }
+.nav-section { padding: 12px 0 2px; }
+.nav-section-label { font-size: 9px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.3); padding: 0 16px 5px; }
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 16px; cursor: pointer; font-size: 12px;
+  color: rgba(255,255,255,.65); text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: background .12s, color .12s;
+}
+.nav-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,.12); color: #fff; border-left-color: #5B9BD5; }
+.nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.legend { padding: 14px 16px; margin-top: auto; border-top: 1px solid rgba(255,255,255,.1); }
+.legend-title { font-size: 9px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.3); margin-bottom: 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(255,255,255,.55); margin-bottom: 5px; }
+.legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+/* ── MAIN ── */
+.main { flex: 1; min-width: 0; overflow-x: auto; }
+
+.page-header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 14px 24px; display: flex; align-items: center;
+  justify-content: space-between; position: sticky; top: 0; z-index: 20;
+}
+.page-header h1 { font-size: 15px; font-weight: 600; }
+.page-header .subtitle { font-size: 11px; color: var(--fg-muted); margin-top: 1px; }
+.badge-row { display: flex; gap: 8px; align-items: center; }
+.badge { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 100px; border: 1px solid; white-space: nowrap; }
+.badge-risk { background: var(--clr-risk-bg); color: var(--clr-risk); border-color: var(--clr-risk); }
+.badge-ok   { background: var(--clr-system-bg); color: var(--clr-system); border-color: var(--clr-system); }
+.badge-amber { background: var(--clr-pending-bg); color: var(--clr-pending); border-color: var(--clr-pending); }
+
+/* ── TABS ── */
+.tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; padding: 0 24px; overflow-x: auto; }
+.tab { padding: 10px 16px; font-size: 12px; font-weight: 500; color: var(--fg-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: color .12s, border-color .12s; white-space: nowrap; }
+.tab:hover { color: var(--fg); }
+.tab.active { color: var(--clr-customer); border-bottom-color: var(--clr-customer); }
+
+/* ── CANVAS ── */
+.canvas { padding: 20px 24px; min-width: 860px; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── SWIMLANE ── */
+.swimlane-container { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; }
+.swimlane-title-bar { background: var(--navy); color: #fff; padding: 11px 20px; display: flex; align-items: center; justify-content: space-between; }
+.swimlane-title-bar h2 { font-size: 12px; font-weight: 600; }
+.swimlane-title-bar .map-id { font-family: var(--font-mono); font-size: 9px; color: rgba(255,255,255,.4); }
+.lanes { display: flex; flex-direction: column; }
+.lane { display: flex; border-bottom: 1px solid var(--border); min-height: 90px; }
+.lane:last-child { border-bottom: none; }
+.lane-label { width: 130px; flex-shrink: 0; background: var(--surface-2); border-right: 1px solid var(--border); padding: 12px 12px; display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+.lane-label-text { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--fg-muted); }
+.lane-label-sub { font-size: 9px; color: var(--fg-subtle); font-family: var(--font-mono); }
+.lane-track { flex: 1; padding: 12px 16px; overflow-x: auto; }
+.flow { display: flex; align-items: flex-start; flex-wrap: nowrap; gap: 0; min-width: max-content; }
+
+/* ── NODES ── */
+.node {
+  position: relative; border-radius: var(--radius); border: 2px solid;
+  padding: 11px 13px; min-width: 120px; max-width: 160px;
+  font-size: 12px; line-height: 1.4; flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,.18);
+}
+.node-customer { background: var(--clr-customer); border-color: var(--clr-customer); color: #fff; }
+.node-system   { background: var(--clr-system);   border-color: var(--clr-system);   color: #fff; }
+.node-risk     { background: var(--clr-risk);     border-color: var(--clr-risk);     color: #fff; }
+.node-infra    { background: var(--clr-infra);    border-color: var(--clr-infra);    color: #fff; }
+.node-id    { font-family: var(--font-mono); font-size: 9px; font-weight: 500; opacity: .65; margin-bottom: 3px; }
+.node-label { font-weight: 700; font-size: 12px; }
+.node-sub   { font-size: 10px; opacity: .88; margin-top: 3px; word-break: break-word; white-space: normal; line-height: 1.4; }
+.node-flag { position: absolute; top: -5px; right: -5px; width: 14px; height: 14px; border-radius: 50%; background: #c0392b; color: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+.arrow-col { display: flex; flex-direction: column; align-items: center; padding: 0 3px; margin-top: 18px; flex-shrink: 0; }
+.arrow { color: var(--fg-muted); font-size: 18px; line-height: 1; font-weight: 700; }
+.arrow-label { font-size: 9px; color: var(--fg-muted); font-family: var(--font-mono); white-space: nowrap; }
+
+/* ── DATAFLOW GRID ── */
+.dataflow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px; }
+.df-system { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 13px; }
+.df-system.primary { border-color: var(--clr-risk); }
+.df-system.ok      { border-color: var(--clr-system); }
+.df-system.warn    { border-color: var(--clr-pending); }
+.df-system.infra   { border-color: var(--clr-infra); }
+.df-icon { font-size: 18px; margin-bottom: 5px; }
+.df-name { font-size: 12px; font-weight: 600; color: var(--fg); }
+.df-tech { font-size: 9px; font-family: var(--font-mono); color: var(--fg-subtle); margin-top: 2px; }
+.df-desc { font-size: 10px; color: var(--fg-muted); margin-top: 5px; line-height: 1.4; }
+.df-tag { display: inline-block; margin-top: 6px; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+.df-tag.risk    { background: var(--clr-risk-bg);    color: var(--clr-risk); }
+.df-tag.ok      { background: var(--clr-system-bg);  color: var(--clr-system); }
+.df-tag.warn    { background: var(--clr-pending-bg); color: var(--clr-pending); }
+
+/* ── FLOW ANNOTATIONS ── */
+.flow-note { background: var(--surface-2); border-radius: var(--radius); padding: 10px 14px; font-size: 10px; color: var(--fg-muted); display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 14px; }
+
+/* ── ISSUE TABLE ── */
+.issue-group { margin-bottom: 22px; }
+.issue-group-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--fg-subtle); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.issue-group-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+table.it { width: 100%; border-collapse: collapse; font-size: 11px; }
+table.it th { text-align: left; padding: 5px 9px; font-size: 9px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--fg-subtle); border-bottom: 1px solid var(--border); background: var(--surface-2); }
+table.it td { padding: 7px 9px; vertical-align: top; border-bottom: 1px solid var(--border); color: var(--fg); line-height: 1.45; }
+table.it tr:last-child td { border-bottom: none; }
+table.it tr:hover td { background: var(--surface-2); }
+
+.chip { display: inline-flex; align-items: center; font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 100px; white-space: nowrap; }
+.p-critical { background: #FEE2D5; color: #B84C1A; }
+.p-high     { background: #FEF3D5; color: #8B6914; }
+.p-medium   { background: #E1EDF8; color: #1D6FA4; }
+.a-chip { display: inline-flex; font-size: 9px; font-weight: 500; padding: 2px 6px; border-radius: 3px; background: var(--surface-2); color: var(--fg-muted); white-space: nowrap; font-family: var(--font-mono); }
+
+/* ── SUMMARY CARDS ── */
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 8px; }
+.sum-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.sum-card-title { font-size: 11px; font-weight: 700; color: var(--fg); margin-bottom: 8px; }
+.sum-card-body { font-size: 11px; color: var(--fg-muted); line-height: 1.7; }
+
+/* ── PARTICIPANTS ── */
+.participants { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.participant { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: 4px 10px; font-size: 11px; color: var(--fg-muted); }
+.p-avatar { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0; }
+
+/* ── THEME TOGGLE ── */
+.theme-toggle {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 100px; padding: 5px 12px; cursor: pointer;
+  font-size: 11px; font-weight: 600; color: var(--fg-muted);
+  transition: background .15s, color .15s;
+  white-space: nowrap; user-select: none;
+}
+.theme-toggle:hover { background: var(--border); color: var(--fg); }
+.toggle-track {
+  width: 32px; height: 18px; border-radius: 9px;
+  background: var(--border); position: relative;
+  transition: background .2s; flex-shrink: 0;
+}
+.toggle-track.on { background: var(--navy); }
+.toggle-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.toggle-track.on .toggle-thumb { transform: translateX(14px); }
+
+@media (max-width: 700px) {
+  .sidenav { display: none; }
+  .dataflow { grid-template-columns: 1fr 1fr; }
+  .canvas { min-width: 0; padding: 14px; }
+  .summary-grid { grid-template-columns: 1fr; }
+  .badge-row .badge { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- SIDENAV -->
+  <nav class="sidenav">
+    <div class="sidenav-header">
+      <div class="sidenav-logo">Liguori Publications</div>
+      <div class="sidenav-title">Subscriptions Process Map</div>
+      <div class="sidenav-meta">Meeting · Oct 23 2026 · Current State</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Process Maps</div>
+      <a class="nav-item active" href="#map-a" onclick="showTab('map-a',this);return false;">
+        <span class="nav-dot" style="background:#1D6FA4"></span> A · Customer Journey
+      </a>
+      <a class="nav-item" href="#map-b" onclick="showTab('map-b',this);return false;">
+        <span class="nav-dot" style="background:#2E7D52"></span> B · Data Architecture
+      </a>
+      <a class="nav-item" href="#map-c" onclick="showTab('map-c',this);return false;">
+        <span class="nav-dot" style="background:#B84C1A"></span> C · System Integrations
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Analysis</div>
+      <a class="nav-item" href="#issues" onclick="showTab('issues',this);return false;">
+        <span class="nav-dot" style="background:#B84C1A"></span> Issues &amp; Actions
+      </a>
+      <a class="nav-item" href="#nextsteps" onclick="showTab('nextsteps',this);return false;">
+        <span class="nav-dot" style="background:#5B3FA0"></span> Next Steps
+      </a>
+    </div>
+    <div class="legend">
+      <div class="legend-title">Node Legend</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:#1D6FA4"></span> Customer action</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:#2E7D52"></span> System / backend</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:#B84C1A"></span> Risk / blocked</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:#5B3FA0"></span> Infrastructure</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1>Liguori Subscriptions — Current State Process Intelligence</h1>
+        <div class="subtitle">Sreejith S · Charles Kumar · Wendy Barnes · Chuck Healy &nbsp;|&nbsp; Oct 23, 2026 &nbsp;|&nbsp; 1h 22m transcript</div>
+      </div>
+      <div class="badge-row">
+        <span class="badge badge-risk">4 Critical Issues</span>
+        <span class="badge badge-amber">5 High Issues</span>
+        <span class="badge badge-ok">10 Action Items</span>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode">
+          <div class="toggle-track" id="toggleTrack"><div class="toggle-thumb"></div></div>
+          <span id="themeLabel">Dark</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab active" onclick="showTab('map-a',this)">A — Customer Journey</div>
+      <div class="tab" onclick="showTab('map-b',this)">B — Data Architecture</div>
+      <div class="tab" onclick="showTab('map-c',this)">C — System Integrations</div>
+      <div class="tab" onclick="showTab('issues',this)">Issues &amp; Actions</div>
+      <div class="tab" onclick="showTab('nextsteps',this)">Next Steps</div>
+    </div>
+
+    <div class="canvas">
+
+      <!-- ═══ MAP A — CUSTOMER JOURNEY ═══ -->
+      <div id="map-a" class="section active">
+
+        <div class="swimlane-container">
+          <div class="swimlane-title-bar">
+            <h2>A1 · Individual Subscriber Journey — subscriptions.liguori.org (Current State)</h2>
+            <span class="map-id">PROC-A1</span>
+          </div>
+          <div class="lanes">
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Customer</div>
+                <div class="lane-label-sub">Individual / Parish</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-customer">
+                    <div class="node-id">A1.1</div>
+                    <div class="node-label">Arrives at Site</div>
+                    <div class="node-sub">subscriptions.liguori.org — via search, email or direct link</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">HTTP</div></div>
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">A1.2</div>
+                    <div class="node-label">Security Warning</div>
+                    <div class="node-sub">McAfee / browser flags site as risky — many customers abandon here</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">Bypass or Exit</div></div>
+                  <div class="node node-customer">
+                    <div class="node-id">A1.3</div>
+                    <div class="node-label">Register / Log In</div>
+                    <div class="node-sub">Email as username — auth from legacy Magento DB</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-customer">
+                    <div class="node-id">A1.4</div>
+                    <div class="node-label">Browse Products</div>
+                    <div class="node-sub">Print + digital subs; Liguori books, magazines</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">A1.5</div>
+                    <div class="node-label">Cannot Pay Online</div>
+                    <div class="node-sub">CyberSource suspended — payment forms disabled after skimmer attack</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">Forced</div></div>
+                  <div class="node node-customer">
+                    <div class="node-id">A1.6</div>
+                    <div class="node-label">Must Call to Pay</div>
+                    <div class="node-sub">Phone order only — no self-serve checkout</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Think Platform</div>
+                <div class="lane-label-sub">MPS / Highwire</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">A2.1</div>
+                    <div class="node-label">Legacy Magento DB</div>
+                    <div class="node-sub">v1.8/1.9 — auth store for site login; restricted access</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">Auth check</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">A2.2</div>
+                    <div class="node-label">Think Subscription Engine</div>
+                    <div class="node-sub">Validates entitlements; manages sub records and renewals</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">Pings</div></div>
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">A2.3</div>
+                    <div class="node-label">CyberSource DISABLED</div>
+                    <div class="node-sub">Payment gateway suspended — skimmer injected into page JS</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">A2.4</div>
+                    <div class="node-label">Content Access Grant</div>
+                    <div class="node-sub">Entitlement confirmed → Uberflip link issued</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">A2.5</div>
+                    <div class="node-label">Uberflip — No Auth</div>
+                    <div class="node-sub">Link shareable without login; no access controls — any subscriber can forward</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Staff</div>
+                <div class="lane-label-sub">Internal Only</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-customer">
+                    <div class="node-id">A3.1</div>
+                    <div class="node-label">Receive Phone Call</div>
+                    <div class="node-sub">All new subscription orders handled by phone</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">A3.2</div>
+                    <div class="node-label">Lookup Acumen</div>
+                    <div class="node-sub">Check if existing account — can't auto-match across portals</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">Manual</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">A3.3</div>
+                    <div class="node-label">Process in Think</div>
+                    <div class="node-sub">Staff enter payment via Think's own interface with CyberSource</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">A3.4</div>
+                    <div class="node-label">Dual Manual Update</div>
+                    <div class="node-sub">Staff must update Think AND legacy Magento DB separately — no sync</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">A3.5</div>
+                    <div class="node-label">Email Confirmation</div>
+                    <div class="node-sub">Manual confirmation sent to customer</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="swimlane-container">
+          <div class="swimlane-title-bar">
+            <h2>A2 · Liguorian Magazine Subscriber Journey — subscribe.liguorian.org (Newer Site)</h2>
+            <span class="map-id">PROC-A2</span>
+          </div>
+          <div class="lanes">
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Customer</div>
+                <div class="lane-label-sub">Magazine Subscriber</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-customer">
+                    <div class="node-id">B1.1</div>
+                    <div class="node-label">Visit Liguorian Site</div>
+                    <div class="node-sub">subscribe.liguorian.org — cleaner, newer experience</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-customer">
+                    <div class="node-id">B1.2</div>
+                    <div class="node-label">Select Plan</div>
+                    <div class="node-sub">Print / Digital / Both — pricing displayed</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">B1.3</div>
+                    <div class="node-label">Checkout via Think</div>
+                    <div class="node-sub">Payment processed — CyberSource (separate from main sub site)</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">B1.4</div>
+                    <div class="node-label">Digital Access: Conflict</div>
+                    <div class="node-sub">Father Tom gives digital edition free — some still paying; policy unresolved</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-customer">
+                    <div class="node-id">B1.5</div>
+                    <div class="node-label">Receives Confirmation</div>
+                    <div class="node-sub">Email + digital access link (Uberflip)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Think / Backend</div>
+                <div class="lane-label-sub">MPS / Highwire</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-system">
+                    <div class="node-id">B2.1</div>
+                    <div class="node-label">Think Records Sub</div>
+                    <div class="node-sub">New subscription written to Think — separate from main sub records</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">B2.2</div>
+                    <div class="node-label">Renewal Reminders</div>
+                    <div class="node-sub">Think sends automated renewal emails — working</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">B2.3</div>
+                    <div class="node-label">No SSO Bridge</div>
+                    <div class="node-sub">Separate credentials from subscriptions.liguori.org — no shared login</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="swimlane-container">
+          <div class="swimlane-title-bar">
+            <h2>A3 · Parish / B2B Journey — Bulk Subscriptions (Acumen-led)</h2>
+            <span class="map-id">PROC-A3</span>
+          </div>
+          <div class="lanes">
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Parish Admin</div>
+                <div class="lane-label-sub">B2B Customer</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-customer">
+                    <div class="node-id">C1.1</div>
+                    <div class="node-label">Contact Liguori</div>
+                    <div class="node-sub">Phone or email — no self-serve B2B portal exists</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">C1.2</div>
+                    <div class="node-label">Staff Create Acumen Account</div>
+                    <div class="node-sub">Parish set up manually in Acumen; Authorize.net for payment</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">C1.3</div>
+                    <div class="node-label">No Customer Portal</div>
+                    <div class="node-sub">Parishes cannot self-manage orders, renewals or account changes</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">C1.4</div>
+                    <div class="node-label">Fulfillment via Acumen</div>
+                    <div class="node-sub">Print materials shipped; no digital delivery path for bulk B2B</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">C1.5</div>
+                    <div class="node-label">No Think Integration</div>
+                    <div class="node-sub">B2B subs in Acumen don't sync to Think — duplicate records risk</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /map-a -->
+
+      <!-- ═══ MAP B — DATA ARCHITECTURE ═══ -->
+      <div id="map-b" class="section">
+
+        <div class="swimlane-container">
+          <div class="swimlane-title-bar">
+            <h2>B1 · System Landscape — All Liguori Digital Platforms (Current State)</h2>
+            <span class="map-id">PROC-B1</span>
+          </div>
+          <div style="padding: 18px 20px 14px;">
+
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-subtle);margin-bottom:8px;">Customer-Facing Portals</div>
+            <div class="dataflow">
+              <div class="df-system primary">
+                <div class="df-icon">⚠️</div>
+                <div class="df-name">subscriptions.liguori.org</div>
+                <div class="df-tech">.NET Application — built 2014–15</div>
+                <div class="df-desc">Main subscription portal. No source code available. Payments disabled. McAfee security flag active. Risk of imminent takedown.</div>
+                <span class="df-tag risk">CRITICAL — no payment, no source code</span>
+              </div>
+              <div class="df-system ok">
+                <div class="df-icon">📰</div>
+                <div class="df-name">subscribe.liguorian.org</div>
+                <div class="df-tech">Newer build — Classic Informatics + MPS</div>
+                <div class="df-desc">Liguorian magazine subscription portal. Built separately due to risks on main sub site. Functional — CyberSource active here.</div>
+                <span class="df-tag ok">Functioning — newer stack</span>
+              </div>
+              <div class="df-system ok">
+                <div class="df-icon">🛒</div>
+                <div class="df-name">liguori.org (Magento)</div>
+                <div class="df-tech">Magento 2.x — 3rd rebuild, AWS-hosted</div>
+                <div class="df-desc">E-commerce store. Books, merchandise. Sends orders one-way to Acumen. Managed by Classic Informatics. Separate from subscription platforms.</div>
+                <span class="df-tag ok">Active e-commerce</span>
+              </div>
+              <div class="df-system warn">
+                <div class="df-icon">🧘</div>
+                <div class="df-name">Managing Scrupulosity</div>
+                <div class="df-tech">Standalone site</div>
+                <div class="df-desc">Separate mental health / pastoral site. Own login. Not integrated with main portal or sub system. Mentioned as future consolidation candidate.</div>
+                <span class="df-tag warn">Isolated — no integration</span>
+              </div>
+            </div>
+
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-subtle);margin-bottom:8px;margin-top:14px;">Backend &amp; Fulfillment Systems</div>
+            <div class="dataflow">
+              <div class="df-system ok">
+                <div class="df-icon">📋</div>
+                <div class="df-name">Think (MPS / Highwire)</div>
+                <div class="df-tech">SaaS — subscription management</div>
+                <div class="df-desc">Core subscription records, payment auth (CyberSource), renewal management. Managed by MPS Limited. Staff use Think daily. Interface is the problem, not the system.</div>
+                <span class="df-tag ok">Core system — functioning</span>
+              </div>
+              <div class="df-system ok">
+                <div class="df-icon">🏦</div>
+                <div class="df-name">Acumen</div>
+                <div class="df-tech">Internal CRM / fulfillment — Authorize.net</div>
+                <div class="df-desc">Customer fulfillment, print order management, B2B (parish) accounts. Receives one-way feed from Magento. NOT customer-facing. Staff-only. Vivian manages separate AWS account for it.</div>
+                <span class="df-tag ok">Internal — staff only</span>
+              </div>
+              <div class="df-system primary">
+                <div class="df-icon">🗄️</div>
+                <div class="df-name">Legacy Magento DB</div>
+                <div class="df-tech">Magento v1.8/1.9 — Adobe restricted</div>
+                <div class="df-desc">Authentication store for subscriptions.liguori.org logins. Security risk — Adobe restricted access. Cannot decommission until main sub site migrated.</div>
+                <span class="df-tag risk">Security risk — blocked</span>
+              </div>
+              <div class="df-system warn">
+                <div class="df-icon">📺</div>
+                <div class="df-name">Uberflip</div>
+                <div class="df-tech">Digital content viewer (legacy)</div>
+                <div class="df-desc">Delivers digital edition content. No access controls — links shareable without auth. Being replaced by Issuu. No timeline confirmed yet.</div>
+                <span class="df-tag warn">Replace with Issuu</span>
+              </div>
+            </div>
+
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-subtle);margin-bottom:8px;margin-top:14px;">Infrastructure &amp; Hosting</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+              <div class="df-system infra">
+                <div class="df-icon">☁️</div>
+                <div class="df-name">AWS (Primary)</div>
+                <div class="df-tech">cPanel + WHM — two accounts</div>
+                <div class="df-desc">Wendy manages web AWS account. Vivian manages Acumen AWS account. Most sites consolidated here. 2 sites still at Rochen (pending migration).</div>
+                <span class="df-tag ok">Mostly consolidated</span>
+              </div>
+              <div class="df-system infra">
+                <div class="df-icon">🌐</div>
+                <div class="df-name">Classic Informatics</div>
+                <div class="df-tech">Dev + hosting vendor since 2015</div>
+                <div class="df-desc">Manages Magento, subscriptions site, and other Liguori properties. Has no source code for .NET sub site. Rebuilding with Liguori on Tuesday meeting agenda.</div>
+                <span class="df-tag warn">Critical dependency</span>
+              </div>
+              <div class="df-system infra">
+                <div class="df-icon">🔑</div>
+                <div class="df-name">Domain Registrars</div>
+                <div class="df-tech">Network Solutions + GoDaddy</div>
+                <div class="df-desc">Domains split across two registrars. SSL certificates managed separately. Part of upcoming audit for security remediation.</div>
+                <span class="df-tag warn">Fragmented</span>
+              </div>
+              <div class="df-system warn">
+                <div class="df-icon">🔐</div>
+                <div class="df-name">CyberSource</div>
+                <div class="df-tech">Payment gateway (Visa/Mastercard)</div>
+                <div class="df-desc">Used by Think for payment processing. Suspended on subscriptions.liguori.org after JS skimmer attack. Still active on subscribe.liguorian.org.</div>
+                <span class="df-tag risk">Suspended on main site</span>
+              </div>
+            </div>
+
+            <div class="flow-note" style="margin-top:14px;">
+              <span><strong style="color:var(--clr-system);">One-way data flows:</strong> Magento → Acumen · subscriptions site → Think · Liguorian site → Think</span>
+              <span><strong style="color:var(--clr-risk);">No reverse sync:</strong> Think ↛ Acumen · No SSO across 4+ portals · Email changes require manual dual update · B2B subs (Acumen) ↛ Think</span>
+              <span><strong style="color:var(--clr-infra);">Auth fragmentation:</strong> subscriptions.liguori.org uses legacy Magento DB · liguori.org uses current Magento · subscribe.liguorian.org uses Think · Managing Scrupulosity standalone</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /map-b -->
+
+      <!-- ═══ MAP C — SYSTEM INTEGRATIONS ═══ -->
+      <div id="map-c" class="section">
+
+        <div class="swimlane-container">
+          <div class="swimlane-title-bar">
+            <h2>C1 · SSO &amp; Authentication Fragmentation — Current State</h2>
+            <span class="map-id">PROC-C1</span>
+          </div>
+          <div class="lanes">
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Portals</div>
+                <div class="lane-label-sub">Customer Facing</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">C1.1</div>
+                    <div class="node-label">subscriptions.liguori.org</div>
+                    <div class="node-sub">Auth: Legacy Magento DB v1.8/1.9</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow" style="color:var(--clr-risk);">✗</div><div class="arrow-label">No link</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">C1.2</div>
+                    <div class="node-label">liguori.org</div>
+                    <div class="node-sub">Auth: Magento 2.x (current)</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow" style="color:var(--clr-risk);">✗</div><div class="arrow-label">No link</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">C1.3</div>
+                    <div class="node-label">subscribe.liguorian.org</div>
+                    <div class="node-sub">Auth: Think Platform account</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow" style="color:var(--clr-risk);">✗</div><div class="arrow-label">No link</div></div>
+                  <div class="node node-infra">
+                    <div class="node-id">C1.4</div>
+                    <div class="node-label">Managing Scrupulosity</div>
+                    <div class="node-sub">Auth: Standalone — own DB</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Auth Systems</div>
+                <div class="lane-label-sub">Backend Identity</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">C2.1</div>
+                    <div class="node-label">Legacy Magento DB</div>
+                    <div class="node-sub">Security risk — Adobe locked; cannot modify, cannot decommission</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow" style="color:var(--clr-risk);">✗</div><div class="arrow-label">Isolated</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">C2.2</div>
+                    <div class="node-label">Magento 2.x</div>
+                    <div class="node-sub">Customer accounts for liguori.org store — not tied to subs</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow" style="color:var(--clr-risk);">✗</div><div class="arrow-label">Isolated</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">C2.3</div>
+                    <div class="node-label">Think / MPS</div>
+                    <div class="node-sub">Subscription identity + entitlements — managed by MPS</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow" style="color:var(--clr-risk);">✗</div><div class="arrow-label">Isolated</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">C2.4</div>
+                    <div class="node-label">Acumen</div>
+                    <div class="node-sub">Customer records for fulfillment — staff only, no customer portal</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Payment Gateways</div>
+                <div class="lane-label-sub">Split by System</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-risk">
+                    <div class="node-flag">!</div>
+                    <div class="node-id">C3.1</div>
+                    <div class="node-label">CyberSource — DISABLED</div>
+                    <div class="node-sub">subscriptions.liguori.org — skimmer attack; suspended by Visa/MC</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">Different gateway</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">C3.2</div>
+                    <div class="node-label">CyberSource — ACTIVE</div>
+                    <div class="node-sub">subscribe.liguorian.org — separate instance, not affected by attack</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">Different gateway</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">C3.3</div>
+                    <div class="node-label">Authorize.net</div>
+                    <div class="node-sub">Acumen / B2B orders only — staff use this for parish accounts</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="swimlane-container">
+          <div class="swimlane-title-bar">
+            <h2>C2 · Data Integration Flows — Current State (All One-Way)</h2>
+            <span class="map-id">PROC-C2</span>
+          </div>
+          <div class="lanes">
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">E-Commerce</div>
+                <div class="lane-label-sub">Magento → Acumen</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-system">
+                    <div class="node-id">D1.1</div>
+                    <div class="node-label">Customer Places Order</div>
+                    <div class="node-sub">liguori.org — books, merchandise</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">One-way feed</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">D1.2</div>
+                    <div class="node-label">Magento Sends to Acumen</div>
+                    <div class="node-sub">Order data pushed to fulfillment</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">D1.3</div>
+                    <div class="node-label">Acumen Fulfills</div>
+                    <div class="node-sub">Print, ship — no digital entitlement link</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow" style="color:var(--clr-risk);">✗</div><div class="arrow-label">No return</div></div>
+                  <div class="node node-risk">
+                    <div class="node-id">D1.4</div>
+                    <div class="node-label">No Back-Sync</div>
+                    <div class="node-sub">Acumen updates don't flow back to Magento — stock/status blind spot</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lane">
+              <div class="lane-label">
+                <div class="lane-label-text">Subscriptions</div>
+                <div class="lane-label-sub">Sub Sites → Think</div>
+              </div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-system">
+                    <div class="node-id">D2.1</div>
+                    <div class="node-label">Sub Order Captured</div>
+                    <div class="node-sub">subscriptions.liguori.org or subscribe.liguorian.org</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div><div class="arrow-label">Push to Think</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">D2.2</div>
+                    <div class="node-label">Think Records Sub</div>
+                    <div class="node-sub">Entitlement, dates, renewal schedule stored in Think</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow" style="color:var(--clr-risk);">✗</div><div class="arrow-label">No sync</div></div>
+                  <div class="node node-risk">
+                    <div class="node-id">D2.3</div>
+                    <div class="node-label">Not in Acumen</div>
+                    <div class="node-sub">Digital subs don't flow to Acumen — B2B and B2C records fragmented</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow" style="color:var(--clr-risk);">✗</div><div class="arrow-label">No sync</div></div>
+                  <div class="node node-risk">
+                    <div class="node-id">D2.4</div>
+                    <div class="node-label">Email Change = Manual Dual Update</div>
+                    <div class="node-sub">Customer email change must be updated in Think AND Magento DB separately</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /map-c -->
+
+      <!-- ═══ ISSUES & ACTIONS ═══ -->
+      <div id="issues" class="section">
+
+        <div class="swimlane-container">
+          <div class="swimlane-title-bar">
+            <h2>Issues Identified &amp; Action Items — Grouped by Theme</h2>
+            <span class="map-id">From meeting Oct 23, 2026 · 1h 22m transcript</span>
+          </div>
+          <div style="padding: 18px 20px;">
+
+            <div class="issue-group">
+              <div class="issue-group-title">🔴 Platform Stability &amp; Security</div>
+              <table class="it">
+                <thead><tr><th>ID</th><th>Priority</th><th>Issue</th><th>Owner</th><th>Action Item</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><span class="a-chip">ISS-01</span></td>
+                    <td><span class="chip p-critical">Critical</span></td>
+                    <td>Online payments completely disabled on subscriptions.liguori.org. CyberSource suspended after a JavaScript skimmer was injected into the payment page. All new subscriptions now require customers to phone in — no self-serve checkout.</td>
+                    <td>Wendy Barnes<br>Classic Informatics</td>
+                    <td><span class="a-chip">ACT-01</span> Rebuild or patch the subscriptions site to remove infected JS and re-enable CyberSource securely. On Tuesday Classic Informatics meeting agenda.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-02</span></td>
+                    <td><span class="chip p-critical">Critical</span></td>
+                    <td>No source code exists for subscriptions.liguori.org. Site was built in .NET around 2014–15 — Classic Informatics reports they cannot patch or extend it without a full rebuild. Any fix requires reverse engineering or complete rewrite.</td>
+                    <td>Classic Informatics<br>Sreejith</td>
+                    <td><span class="a-chip">ACT-02</span> Sreejith to attempt reverse engineering the .NET site using AI tools. Wendy to share server credentials and access details ASAP to enable this.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-03</span></td>
+                    <td><span class="chip p-critical">Critical</span></td>
+                    <td>McAfee and browser security tools actively flagging subscriptions.liguori.org as a risky/malicious site. Visible to customers before they reach the login page — causing abandonment. Site at risk of full blacklisting and takedown.</td>
+                    <td>Classic Informatics<br>Wendy Barnes</td>
+                    <td><span class="a-chip">ACT-03</span> Immediate remediation of malicious JS on the site to clear security flags. Classic Informatics must resolve before blacklisting escalates further.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-04</span></td>
+                    <td><span class="chip p-critical">Critical</span></td>
+                    <td>Legacy Magento v1.8/1.9 database — still used as the authentication store for subscriptions.liguori.org logins. Adobe has restricted access to this version. Cannot be decommissioned until the subscription portal is rebuilt or migrated.</td>
+                    <td>Wendy Barnes<br>Classic Informatics</td>
+                    <td><span class="a-chip">ACT-04</span> Migration away from legacy Magento DB must be scoped into the rebuild plan. Wendy to pull current Magento DB extract and share with Sreejith / Classic Informatics.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-05</span></td>
+                    <td><span class="chip p-high">High</span></td>
+                    <td>PHP issue surfaced 2–3 days before the Oct 23 meeting. Caused cascading instability across hosted properties. Not yet fully resolved. Root cause under investigation by Classic Informatics.</td>
+                    <td>Classic Informatics</td>
+                    <td><span class="a-chip">ACT-05</span> PHP resolution on Tuesday Classic Informatics meeting agenda. Confirm resolution steps and timeline.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="issue-group">
+              <div class="issue-group-title">🟡 Customer Experience &amp; Self-Service</div>
+              <table class="it">
+                <thead><tr><th>ID</th><th>Priority</th><th>Issue</th><th>Owner</th><th>Action Item</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><span class="a-chip">ISS-06</span></td>
+                    <td><span class="chip p-high">High</span></td>
+                    <td>No single sign-on across 4+ customer portals. Customers must maintain separate credentials for subscriptions.liguori.org (legacy Magento auth), liguori.org (Magento 2.x), subscribe.liguorian.org (Think account), and Managing Scrupulosity (standalone). Each portal is a separate identity silo.</td>
+                    <td>Sreejith<br>Charles Kumar</td>
+                    <td><span class="a-chip">ACT-06</span> Sreejith to design a unified ecosystem architecture covering all portals, product types, and customer segments. Deliver draft framework Monday before Tuesday's call.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-07</span></td>
+                    <td><span class="chip p-high">High</span></td>
+                    <td>Parishes (B2B) have no self-service portal. All bulk subscription orders, renewals, and account changes require staff involvement via phone or email. Acumen manages parish accounts internally with no customer-facing interface.</td>
+                    <td>Charles Kumar<br>Chuck Healy</td>
+                    <td><span class="a-chip">ACT-07</span> B2B web portal for parishes to be scoped into Phase 2 of the rebuild. Charles to define B2B requirements — what parishes need to self-manage.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-08</span></td>
+                    <td><span class="chip p-high">High</span></td>
+                    <td>Digital content delivered via Uberflip has no access controls. Subscription links are freely shareable — any subscriber can forward access to non-subscribers. No entitlement check at point of content consumption.</td>
+                    <td>Wendy Barnes<br>Chuck Healy</td>
+                    <td><span class="a-chip">ACT-08</span> Migration to Issuu confirmed as strategic direction. Scope into rebuild plan with a concrete timeline. Issuu must enforce per-user auth before migration.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-09</span></td>
+                    <td><span class="chip p-high">High</span></td>
+                    <td>Liguorian Digital Edition access policy conflict. Father Tom has been distributing the digital edition for free. Some subscribers continue paying for access others receive at no cost. No internal alignment on whether digital edition should be paywalled, freemium, or free.</td>
+                    <td>Charles Kumar<br>Wendy Barnes<br>Chuck Healy</td>
+                    <td><span class="a-chip">ACT-09</span> Internal leadership meeting required to align on Liguorian digital access policy BEFORE any rebuild work starts on digital delivery. Charles to schedule.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="issue-group">
+              <div class="issue-group-title">🔵 Data Integrity &amp; Integration</div>
+              <table class="it">
+                <thead><tr><th>ID</th><th>Priority</th><th>Issue</th><th>Owner</th><th>Action Item</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><span class="a-chip">ISS-10</span></td>
+                    <td><span class="chip p-high">High</span></td>
+                    <td>Duplicate customer records across Acumen, Magento, and Think with no cross-system deduplication. All data flows are one-way only. Email address change in one system does not propagate to others — staff must manually update each system separately.</td>
+                    <td>Chuck Healy<br>Wendy Barnes</td>
+                    <td><span class="a-chip">ACT-10</span> Assess CRM consolidation feasibility as part of rebuild scope. Wendy to pull Magento DB extract to understand current account duplication volume.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-11</span></td>
+                    <td><span class="chip p-medium">Medium</span></td>
+                    <td>B2B subscription records in Acumen do not sync to Think. Parish accounts managed in Acumen for fulfillment but digital sub entitlements are in Think — no bridge between the two systems for B2B customers.</td>
+                    <td>Chuck Healy</td>
+                    <td><span class="a-chip">ACT-10</span> (linked) B2B integration path to Think must be part of rebuild architecture scope.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-12</span></td>
+                    <td><span class="chip p-medium">Medium</span></td>
+                    <td>Hosting split across two AWS accounts (Wendy's web account vs Vivian's Acumen account) with no unified visibility. Two sites still on Rochen hosting pending migration. Domain registrars split across Network Solutions and GoDaddy.</td>
+                    <td>Wendy Barnes</td>
+                    <td><span class="a-chip">ACT-10</span> Infrastructure consolidation to be scoped in rebuild plan. Wendy to complete Rochen migration and audit domain registrar fragmentation.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="issue-group">
+              <div class="issue-group-title">⚙️ Architecture &amp; Rebuild Planning</div>
+              <table class="it">
+                <thead><tr><th>ID</th><th>Priority</th><th>Issue</th><th>Owner</th><th>Action Item</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><span class="a-chip">ISS-13</span></td>
+                    <td><span class="chip p-medium">Medium</span></td>
+                    <td>Rebuild tech stack not yet confirmed. Team agreed: no .NET, modern stack preferred (Node.js / Next.js / Python). AI-ready architecture required. Classic Informatics capability to deliver on modern stack needs verification.</td>
+                    <td>Classic Informatics<br>Sreejith</td>
+                    <td><span class="a-chip">ACT-02</span> (linked) Tuesday meeting to assess Classic Informatics capacity and modern stack capability for the rebuild.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="a-chip">ISS-14</span></td>
+                    <td><span class="chip p-medium">Medium</span></td>
+                    <td>Redemptio and Redacamy (other Liguori-adjacent digital products) mentioned as future integration candidates. No plan or timeline for their consolidation into the unified ecosystem.</td>
+                    <td>Charles Kumar<br>Sreejith</td>
+                    <td>Scope assessment deferred to Phase 2 ecosystem planning. Sreejith to flag in ecosystem architecture framework doc.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /issues -->
+
+      <!-- ═══ NEXT STEPS ═══ -->
+      <div id="nextsteps" class="section">
+
+        <div class="participants">
+          <div class="participant"><div class="p-avatar" style="background:#1D6FA4">SR</div> Sreejith Sivan</div>
+          <div class="participant"><div class="p-avatar" style="background:#2E7D52">CK</div> Charles Kumar</div>
+          <div class="participant"><div class="p-avatar" style="background:#B84C1A">WB</div> Wendy Barnes</div>
+          <div class="participant"><div class="p-avatar" style="background:#5B3FA0">CH</div> Chuck Healy</div>
+        </div>
+
+        <div class="swimlane-container">
+          <div class="swimlane-title-bar">
+            <h2>Immediate Action Timeline — Agreed in Meeting Oct 23, 2026</h2>
+            <span class="map-id">Next Steps</span>
+          </div>
+          <div class="lanes">
+            <div class="lane">
+              <div class="lane-label"><div class="lane-label-text">Monday Oct 26</div><div class="lane-label-sub">2 days post-meeting</div></div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-system">
+                    <div class="node-id">NS-01</div>
+                    <div class="node-label">Ecosystem Architecture Draft</div>
+                    <div class="node-sub">Sreejith delivers framework covering all portals, product types, B2B / B2C customer segments, SSO design</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">NS-02</div>
+                    <div class="node-label">This Process Map</div>
+                    <div class="node-sub">Sreejith delivers current-state process maps + issues table to team (this document)</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-customer">
+                    <div class="node-id">NS-03</div>
+                    <div class="node-label">Server Credentials Handoff</div>
+                    <div class="node-sub">Wendy to share server access + DB credentials so Sreejith can begin reverse engineering the .NET site</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lane">
+              <div class="lane-label"><div class="lane-label-text">Tuesday Oct 27</div><div class="lane-label-sub">Classic Informatics Call</div></div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-system">
+                    <div class="node-id">NS-04</div>
+                    <div class="node-label">Classic Informatics Meeting</div>
+                    <div class="node-sub">6:30 AM CT — Wendy + Classic Informatics team; Sreejith joins at 5 PM IST equivalent</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-risk">
+                    <div class="node-id">NS-05</div>
+                    <div class="node-label">Agenda: PHP Fix</div>
+                    <div class="node-sub">Resolve PHP cascading issue — root cause + fix confirmation</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">NS-06</div>
+                    <div class="node-label">Agenda: Rebuild Scope</div>
+                    <div class="node-sub">Classic Informatics capacity + modern stack capability (Node.js / Next.js / Python); assess rebuild feasibility vs patch</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">NS-07</div>
+                    <div class="node-label">Agenda: Magento DB Extract</div>
+                    <div class="node-sub">Request Wendy pull legacy Magento DB extract for migration scoping; get DB credentials to Classic Informatics</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lane">
+              <div class="lane-label"><div class="lane-label-text">Near-Term</div><div class="lane-label-sub">Within 2 weeks</div></div>
+              <div class="lane-track">
+                <div class="flow">
+                  <div class="node node-customer">
+                    <div class="node-id">NS-08</div>
+                    <div class="node-label">Digital Policy Alignment</div>
+                    <div class="node-sub">Charles schedules internal leadership meeting on Liguorian digital access policy — resolve free vs paid conflict before rebuild</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">NS-09</div>
+                    <div class="node-label">Phase 1 Rebuild Scope</div>
+                    <div class="node-sub">Fix 4 critical pain points: (1) re-enable payments, (2) remove security flag, (3) modernize auth, (4) restore self-serve checkout</div>
+                  </div>
+                  <div class="arrow-col"><div class="arrow">→</div></div>
+                  <div class="node node-system">
+                    <div class="node-id">NS-10</div>
+                    <div class="node-label">Phase 2 Planning</div>
+                    <div class="node-sub">SSO consolidation, B2B portal, Issuu migration, CRM unification, Redemptio / Redacamy integration</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="sum-card">
+            <div class="sum-card-title">✅ Rebuild Principles — Agreed Oct 23</div>
+            <div class="sum-card-body">
+              No .NET — modern stack: Node.js / Next.js / Python<br>
+              AI-ready architecture for future capability layering<br>
+              Phase 1: Fix the 4 critical pain points immediately<br>
+              Phase 2: Ecosystem consolidation + CRM + B2B portal<br>
+              Web portal (not mobile app) — parish customer priority<br>
+              Issuu to replace Uberflip for digital content delivery<br>
+              Redemptio + Redacamy in scope for Phase 2+ integration
+            </div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-card-title">⚠️ Open Decisions Blocking Rebuild</div>
+            <div class="sum-card-body">
+              <strong style="color:var(--clr-risk)">Digital policy:</strong> Is Liguorian Digital Edition free or paid? Who decides?<br>
+              <strong style="color:var(--clr-risk)">Classic Informatics:</strong> Can they deliver a modern stack rebuild, or is a new vendor needed?<br>
+              <strong style="color:var(--clr-risk)">Emergency patch vs rebuild:</strong> Is a patch to restore payments feasible, or is a full rebuild the only path?<br>
+              <strong style="color:var(--clr-risk)">Timeline:</strong> How long before the site is at risk of full blacklisting? No SLA confirmed.
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /nextsteps -->
+
+    </div><!-- /canvas -->
+  </main>
+</div>
+
+<script>
+// Theme toggle
+(function() {
+  try {
+    var saved = localStorage.getItem('liguori-theme');
+    if (saved) applyTheme(saved);
+    else {
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(prefersDark ? 'dark' : 'light');
+    }
+  } catch(e) {}
+})();
+
+function applyTheme(theme) {
+  try {
+    document.documentElement.setAttribute('data-theme', theme);
+    var track = document.getElementById('toggleTrack');
+    var label = document.getElementById('themeLabel');
+    if (theme === 'dark') {
+      if (track) track.classList.add('on');
+      if (label) label.textContent = 'Light';
+    } else {
+      if (track) track.classList.remove('on');
+      if (label) label.textContent = 'Dark';
+    }
+    try { localStorage.setItem('liguori-theme', theme); } catch(e) {}
+  } catch(e) {}
+}
+
+function toggleTheme() {
+  try {
+    var current = document.documentElement.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  } catch(e) {}
+}
+
+function showTab(id, el) {
+  try {
+    document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+    if (el) el.classList.add('active');
+    var map = { 'map-a': 0, 'map-b': 1, 'map-c': 2, 'issues': 3, 'nextsteps': 4 };
+    var navItems = document.querySelectorAll('.nav-item');
+    if (navItems[map[id]]) navItems[map[id]].classList.add('active');
+    // Update hash without scrolling
+    try { history.replaceState(null, '', '#' + id); } catch(e) {}
+  } catch(e) {}
+}
+
+// Hash-based navigation on load
+try {
+  var h = location.hash.replace('#', '');
+  if (h && document.getElementById(h)) showTab(h, null);
+} catch(e) {}
+</script>
+
+</body>
+</html>
